@@ -109,6 +109,14 @@ All charts linted successfully`,
 Error: Invalid YAML syntax`,
 			expected: []string(nil),
 		},
+		{
+			name: "Duplicate chart path in output",
+			output: `Charts to be processed:
+ mychart => (version: "0.1.0", path: "charts/mychart")
+Linting chart "mychart"
+✖︎ mychart => (version: "0.1.0", path: "charts/mychart") > chart version not ok. Needs a version bump!`,
+			expected: []string{"charts/mychart"},
+		},
 	}
 
 	for _, tt := range tests {
@@ -118,9 +126,14 @@ Error: Invalid YAML syntax`,
 				t.Errorf("ExtractChartsNeedingBump() returned %d charts, expected %d", len(result), len(tt.expected))
 				return
 			}
-			for i, chartPath := range result {
-				if chartPath != tt.expected[i] {
-					t.Errorf("ExtractChartsNeedingBump()[%d] = %q, expected %q", i, chartPath, tt.expected[i])
+			// Convert to map for order-independent comparison
+			resultMap := make(map[string]bool)
+			for _, chartPath := range result {
+				resultMap[chartPath] = true
+			}
+			for _, expectedPath := range tt.expected {
+				if !resultMap[expectedPath] {
+					t.Errorf("ExtractChartsNeedingBump() missing expected chart: %q", expectedPath)
 				}
 			}
 		})

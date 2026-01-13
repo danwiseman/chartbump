@@ -30,9 +30,10 @@ func DetectVersionIssue(lintOutput string) bool {
 }
 
 // ExtractChartsNeedingBump parses ct lint output to extract the paths of charts
-// that need version bumps. Returns a slice of chart directory paths.
+// that need version bumps. Returns a slice of unique chart directory paths.
 func ExtractChartsNeedingBump(lintOutput string) []string {
-	var charts []string
+	// Use a map to track unique charts
+	chartSet := make(map[string]bool)
 	lines := strings.Split(lintOutput, "\n")
 
 	// Track the current chart being processed
@@ -51,11 +52,17 @@ func ExtractChartsNeedingBump(lintOutput string) []string {
 		lowerLine := strings.ToLower(line)
 		for _, phrase := range versionBumpPhrases {
 			if strings.Contains(lowerLine, strings.ToLower(phrase)) && currentChartPath != "" {
-				charts = append(charts, currentChartPath)
-				currentChartPath = "" // Reset to avoid duplicates
+				chartSet[currentChartPath] = true
+				currentChartPath = "" // Reset to avoid processing same chart multiple times
 				break
 			}
 		}
+	}
+
+	// Convert map to slice
+	var charts []string
+	for chartPath := range chartSet {
+		charts = append(charts, chartPath)
 	}
 
 	return charts

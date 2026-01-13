@@ -68,13 +68,10 @@ Show help:
 2. **Runs** `helm dep update` to update chart dependencies
 3. **Executes** `ct lint` (chart-testing) and captures the output
    - Uses `--target-branch` flag if specified for git-based comparison
-4. **Analyzes** the lint output for version-related keywords:
-   - "version"
-   - "already exists"
-   - "duplicate"
-   - "chart version"
-   - "bump"
-5. **Bumps** the patch version if a version issue is detected
+4. **Analyzes** the lint output for specific version bump requirement:
+   - Only bumps if output contains: "chart version not ok" or "Needs a version bump"
+   - Will NOT bump for other errors (missing yamllint/yamale, validation errors, etc.)
+5. **Bumps** the patch version if version bump is specifically required
 6. **Updates** Chart.yaml with the new version
 7. **Verifies** the fix by running `ct lint` again
 
@@ -125,6 +122,32 @@ A test chart is included in the `test-chart/` directory. To test the tool:
 ```
 
 Note: This will only bump the version if `ct lint` detects a version-related issue.
+
+## Behavior
+
+### When Version Bump is Needed
+If `ct lint` outputs an error containing "chart version not ok" or "Needs a version bump", the tool will:
+- Bump the patch version in Chart.yaml
+- Update the file
+- Re-run ct lint to verify the fix
+
+### When Other Errors Occur
+If `ct lint` fails for other reasons (missing tools, validation errors, etc.), the tool will:
+- Display the lint output
+- Show common reasons for lint failure
+- Exit without modifying Chart.yaml
+
+Example output when yamllint is missing:
+```
+✗ ct lint failed, but does not require a version bump
+
+Common reasons for lint failure:
+  - Missing required tools (yamllint, yamale)
+  - Chart validation errors
+  - YAML syntax issues
+
+No version bump will be performed.
+```
 
 ## License
 

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: test-chart
+description: A test Helm chart for chartbump
+type: application
+version: 0.1.2
+appVersion: "1.0.0"

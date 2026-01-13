@@ -69,14 +69,18 @@ func runChartBump(cmd *cobra.Command, args []string) error {
 	fmt.Printf("ct lint output:\n%s\n", lintOutput)
 
 	// Step 3: Detect version issue
-	fmt.Println("\nChecking for version-related issues...")
+	fmt.Println("\nChecking for version bump requirement...")
 	if !detector.DetectVersionIssue(lintOutput) {
-		fmt.Println("✗ Lint failed, but no version-related issues detected")
-		fmt.Println("No version bump will be performed")
+		fmt.Println("✗ ct lint failed, but does not require a version bump")
+		fmt.Println("\nCommon reasons for lint failure:")
+		fmt.Println("  - Missing required tools (yamllint, yamale)")
+		fmt.Println("  - Chart validation errors")
+		fmt.Println("  - YAML syntax issues")
+		fmt.Println("\nNo version bump will be performed.")
 		return fmt.Errorf("ct lint failed with non-version issues")
 	}
 
-	fmt.Println("✓ Version-related issue detected")
+	fmt.Println("✓ Version bump required - proceeding with patch version bump")
 
 	// Step 4: Read current chart
 	fmt.Println("\nReading Chart.yaml...")

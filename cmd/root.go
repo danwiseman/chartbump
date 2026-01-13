@@ -5,9 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/dan/chartbump/pkg/chart"
-	"github.com/dan/chartbump/pkg/detector"
-	"github.com/dan/chartbump/pkg/helm"
+	"github.com/danwiseman/chartbump/pkg/chart"
+	"github.com/danwiseman/chartbump/pkg/detector"
+	"github.com/danwiseman/chartbump/pkg/helm"
 	"github.com/spf13/cobra"
 )
 

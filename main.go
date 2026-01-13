@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/dan/chartbump/cmd"
+	"github.com/danwiseman/chartbump/cmd"
 )
 
 func main() {

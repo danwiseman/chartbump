@@ -1,4 +1,4 @@
-module github.com/dan/chartbump
+module github.com/danwiseman/chartbump
 
 go 1.24.1
 

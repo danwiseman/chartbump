@@ -1,6 +1,7 @@
 package detector
 
 import (
+	"regexp"
 	"strings"
 )
 
@@ -26,4 +27,36 @@ func DetectVersionIssue(lintOutput string) bool {
 	}
 
 	return false
+}
+
+// ExtractChartsNeedingBump parses ct lint output to extract the paths of charts
+// that need version bumps. Returns a slice of chart directory paths.
+func ExtractChartsNeedingBump(lintOutput string) []string {
+	var charts []string
+	lines := strings.Split(lintOutput, "\n")
+
+	// Track the current chart being processed
+	var currentChartPath string
+
+	// Regex to extract chart path from: mychart => (version: "0.1.0", path: "charts/mychart")
+	pathRegex := regexp.MustCompile(`path:\s*"([^"]+)"`)
+
+	for _, line := range lines {
+		// Check if this line declares a chart being processed
+		if matches := pathRegex.FindStringSubmatch(line); len(matches) > 1 {
+			currentChartPath = matches[1]
+		}
+
+		// Check if this line indicates a version bump is needed
+		lowerLine := strings.ToLower(line)
+		for _, phrase := range versionBumpPhrases {
+			if strings.Contains(lowerLine, strings.ToLower(phrase)) && currentChartPath != "" {
+				charts = append(charts, currentChartPath)
+				currentChartPath = "" // Reset to avoid duplicates
+				break
+			}
+		}
+	}
+
+	return charts
 }

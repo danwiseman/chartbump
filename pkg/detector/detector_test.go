@@ -69,3 +69,60 @@ func TestDetectVersionIssue(t *testing.T) {
 		})
 	}
 }
+
+func TestExtractChartsNeedingBump(t *testing.T) {
+	tests := []struct {
+		name     string
+		output   string
+		expected []string
+	}{
+		{
+			name: "Single chart needs bump",
+			output: ` mychart => (version: "0.1.0", path: "charts/mychart")
+-----------------------------------------------------------
+Linting chart "mychart"
+Chart version not ok. Needs a version bump`,
+			expected: []string{"charts/mychart"},
+		},
+		{
+			name: "Multiple charts need bumps",
+			output: ` chart1 => (version: "0.1.0", path: "charts/chart1")
+Chart version not ok. Needs a version bump
+ chart2 => (version: "0.2.0", path: "charts/chart2")
+Chart version not ok. Needs a version bump`,
+			expected: []string{"charts/chart1", "charts/chart2"},
+		},
+		{
+			name: "No charts need bumps",
+			output: ` mychart => (version: "0.1.0", path: "charts/mychart")
+All charts linted successfully`,
+			expected: []string(nil),
+		},
+		{
+			name:     "Empty output",
+			output:   "",
+			expected: []string(nil),
+		},
+		{
+			name: "Chart with other error",
+			output: ` mychart => (version: "0.1.0", path: "charts/mychart")
+Error: Invalid YAML syntax`,
+			expected: []string(nil),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := ExtractChartsNeedingBump(tt.output)
+			if len(result) != len(tt.expected) {
+				t.Errorf("ExtractChartsNeedingBump() returned %d charts, expected %d", len(result), len(tt.expected))
+				return
+			}
+			for i, chartPath := range result {
+				if chartPath != tt.expected[i] {
+					t.Errorf("ExtractChartsNeedingBump()[%d] = %q, expected %q", i, chartPath, tt.expected[i])
+				}
+			}
+		})
+	}
+}

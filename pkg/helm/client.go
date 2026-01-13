@@ -20,7 +20,8 @@ func RunDepUpdate(chartPath string) error {
 	return nil
 }
 
-// RunCTLint runs 'ct lint' (chart-testing) on the specified chart directory and returns the output
+// RunCTLint runs 'ct lint' (chart-testing) on the specified chart directory and returns the output.
+// If chartPath is empty, ct lint will run without --charts flag to auto-detect changed charts.
 func RunCTLint(chartPath, targetBranch string) (string, error) {
 	args := []string{"lint"}
 
@@ -28,7 +29,9 @@ func RunCTLint(chartPath, targetBranch string) (string, error) {
 		args = append(args, "--target-branch", targetBranch)
 	}
 
-	args = append(args, "--charts", chartPath)
+	if chartPath != "" {
+		args = append(args, "--charts", chartPath)
+	}
 
 	cmd := exec.Command("ct", args...)
 

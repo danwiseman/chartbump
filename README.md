@@ -4,7 +4,10 @@ A Go CLI tool that automatically bumps Helm chart versions when version-related 
 
 ## Features
 
-- Runs `helm dep update` to ensure dependencies are current
+- **Two modes of operation:**
+  - Single chart mode: Target a specific chart directory
+  - Auto-detect mode: Automatically detect and bump all changed charts in a repository
+- Runs `helm dep update` to ensure dependencies are current (single chart mode)
 - Executes `ct lint` (chart-testing) to check for issues
 - Supports git branch comparison for chart-testing
 - Detects version-related problems in lint output
@@ -32,7 +35,9 @@ go install
 
 ## Usage
 
-Basic usage:
+### Single Chart Mode
+
+Target a specific chart directory:
 
 ```bash
 ./chartbump /path/to/helm/chart
@@ -50,11 +55,25 @@ Dry run (preview changes without modifying files):
 ./chartbump --dry-run /path/to/helm/chart
 ```
 
-Combine flags:
+### Auto-Detect Mode
+
+Automatically detect and bump all changed charts in the repository:
 
 ```bash
-./chartbump --target-branch main --dry-run /path/to/helm/chart
+./chartbump --target-branch main
 ```
+
+This mode runs `ct lint --target-branch main` without specifying a chart directory, allowing ct to automatically detect changed charts based on git history. All charts that need version bumps will be processed automatically.
+
+Dry run in auto-detect mode:
+
+```bash
+./chartbump --target-branch main --dry-run
+```
+
+**Note:** `--target-branch` is required when no chart directory is specified.
+
+### Help
 
 Show help:
 
@@ -63,6 +82,8 @@ Show help:
 ```
 
 ## How It Works
+
+### Single Chart Mode
 
 1. **Validates** that Chart.yaml exists in the target directory
 2. **Runs** `helm dep update` to update chart dependencies
@@ -74,6 +95,16 @@ Show help:
 5. **Bumps** the patch version if version bump is specifically required
 6. **Updates** Chart.yaml with the new version
 7. **Verifies** the fix by running `ct lint` again
+
+### Auto-Detect Mode
+
+1. **Executes** `ct lint --target-branch <branch>` without specifying charts
+2. **Parses** the output to identify all charts that need version bumps
+3. **For each chart** that needs a version bump:
+   - Reads the current version from Chart.yaml
+   - Bumps the patch version
+   - Updates Chart.yaml with the new version
+4. **Reports** summary of successful and failed bumps
 
 ## Example
 

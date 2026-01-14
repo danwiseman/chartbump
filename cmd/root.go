@@ -15,6 +15,7 @@ import (
 var (
 	dryRun       bool
 	targetBranch string
+	runHelmDocs  bool
 )
 
 var rootCmd = &cobra.Command{
@@ -32,6 +33,7 @@ auto-detect changed charts in the repository.`,
 func init() {
 	rootCmd.Flags().BoolVar(&dryRun, "dry-run", false, "Show what would change without modifying files")
 	rootCmd.Flags().StringVar(&targetBranch, "target-branch", "", "Git branch to compare against (for ct lint)")
+	rootCmd.Flags().BoolVar(&runHelmDocs, "docs", false, "Run helm-docs after updating chart version")
 }
 
 func Execute() error {
@@ -127,6 +129,17 @@ func runSingleChartMode(chartPath string) error {
 	}
 
 	fmt.Println("✓ Chart.yaml updated successfully")
+
+	// Step 6.5: Run helm-docs if flag is set
+	if runHelmDocs {
+		fmt.Println("\nRunning helm-docs...")
+		if err := helm.RunHelmDocs(chartPath); err != nil {
+			fmt.Printf("Warning: %v\n", err)
+			// Continue even if helm-docs fails - not critical
+		} else {
+			fmt.Println("✓ Documentation updated")
+		}
+	}
 
 	// Step 7: Verify with ct lint
 	fmt.Println("\nVerifying with ct lint...")
@@ -227,6 +240,17 @@ func bumpChartVersion(chartPath string) error {
 
 	if err := chart.UpdateChartVersion(chartPath, newVersion); err != nil {
 		return fmt.Errorf("failed to update chart version: %w", err)
+	}
+
+	// Run helm-docs if flag is set
+	if runHelmDocs {
+		fmt.Println("  Running helm-docs...")
+		if err := helm.RunHelmDocs(chartPath); err != nil {
+			fmt.Printf("  Warning: %v\n", err)
+			// Continue even if helm-docs fails - not critical
+		} else {
+			fmt.Println("  ✓ Documentation updated")
+		}
 	}
 
 	return nil

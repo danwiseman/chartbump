@@ -53,3 +53,17 @@ func RunCTLint(chartPath, targetBranch string) (string, error) {
 
 	return output, nil
 }
+
+// RunHelmDocs runs 'helm-docs' on the specified chart directory
+func RunHelmDocs(chartPath string) error {
+	cmd := exec.Command("helm-docs", chartPath)
+
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("helm-docs failed: %w\nOutput: %s", err, stderr.String())
+	}
+
+	return nil
+}

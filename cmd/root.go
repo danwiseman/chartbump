@@ -170,6 +170,30 @@ func runAutoDetectMode() error {
 
 	fmt.Printf("ct lint output:\n%s\n", lintOutput)
 
+	// If ct lint failed due to dependency issues, run dep update and retry
+	if detector.DetectDependencyIssue(lintOutput) {
+		fmt.Println("\nDependency issues detected - running helm dep update on all charts...")
+		cwd, err := os.Getwd()
+		if err != nil {
+			return fmt.Errorf("failed to get working directory: %w", err)
+		}
+		if err := helm.RunDepUpdateAll(cwd); err != nil {
+			fmt.Printf("Warning: %v\n", err)
+		} else {
+			fmt.Println("✓ Dependencies updated")
+		}
+
+		fmt.Println("\nRetrying ct lint after dependency update...")
+		lintOutput, lintErr = helm.RunCTLint("", targetBranch)
+
+		if lintErr == nil {
+			fmt.Println("✓ All charts passed ct lint after dependency update - no version bumps needed")
+			return nil
+		}
+
+		fmt.Printf("ct lint output (after dep update):\n%s\n", lintOutput)
+	}
+
 	// Extract charts that need version bumps
 	fmt.Println("\nAnalyzing charts for version bump requirements...")
 	chartsNeedingBump := detector.ExtractChartsNeedingBump(lintOutput)

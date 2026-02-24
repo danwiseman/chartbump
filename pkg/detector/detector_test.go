@@ -70,6 +70,64 @@ func TestDetectVersionIssue(t *testing.T) {
 	}
 }
 
+func TestDetectDependencyIssue(t *testing.T) {
+	tests := []struct {
+		name     string
+		output   string
+		expected bool
+	}{
+		{
+			name:     "Missing dependency in charts directory",
+			output:   `Error: found in Chart.yaml, but missing in charts/ directory`,
+			expected: true,
+		},
+		{
+			name:     "Checking for chart dependencies error",
+			output:   `Error: An error occurred while checking for chart dependencies`,
+			expected: true,
+		},
+		{
+			name:     "Missing in charts subdirectory",
+			output:   `"redis" is listed as a dependency but missing in charts/ directory`,
+			expected: true,
+		},
+		{
+			name:     "Helm dependency mentioned",
+			output:   `Error: helm dependency build failed`,
+			expected: true,
+		},
+		{
+			name:     "Version bump issue not dependency",
+			output:   "Chart version not ok. Needs a version bump",
+			expected: false,
+		},
+		{
+			name:     "Generic YAML error",
+			output:   "Error: Invalid YAML syntax at line 5",
+			expected: false,
+		},
+		{
+			name:     "Lint passed",
+			output:   "All charts linted successfully",
+			expected: false,
+		},
+		{
+			name:     "Empty output",
+			output:   "",
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := DetectDependencyIssue(tt.output)
+			if result != tt.expected {
+				t.Errorf("DetectDependencyIssue(%q) = %v, expected %v", tt.output, result, tt.expected)
+			}
+		})
+	}
+}
+
 func TestExtractChartsNeedingBump(t *testing.T) {
 	tests := []struct {
 		name     string

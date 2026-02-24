@@ -5,6 +5,30 @@ import (
 	"strings"
 )
 
+// dependencyIssuePhrases are specific phrases that indicate a dependency-related failure
+var dependencyIssuePhrases = []string{
+	"found in chart.yaml, but missing in charts/ directory",
+	"an error occurred while checking for chart dependencies",
+	"unable to build kubernetes objects",
+	"chart requires kubeversion",
+	"helm dependency",
+	"missing in charts/",
+}
+
+// DetectDependencyIssue checks if the ct lint output contains errors
+// indicating that chart dependencies need to be updated.
+func DetectDependencyIssue(lintOutput string) bool {
+	lowerOutput := strings.ToLower(lintOutput)
+
+	for _, phrase := range dependencyIssuePhrases {
+		if strings.Contains(lowerOutput, phrase) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // versionBumpPhrases are specific phrases that indicate a version bump is needed
 var versionBumpPhrases = []string{
 	"chart version not ok",

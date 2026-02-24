@@ -3,7 +3,9 @@ package helm
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
 )
 
 // RunDepUpdate runs 'helm dep update' on the specified chart directory
@@ -15,6 +17,33 @@ func RunDepUpdate(chartPath string) error {
 
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("helm dep update failed: %w\nOutput: %s", err, stderr.String())
+	}
+
+	return nil
+}
+
+// RunDepUpdateAll iterates over all immediate subdirectories in basePath
+// and runs 'helm dep update' on each. This is useful when ct lint fails
+// due to missing dependencies across multiple charts.
+func RunDepUpdateAll(basePath string) error {
+	entries, err := os.ReadDir(basePath)
+	if err != nil {
+		return fmt.Errorf("failed to read directory %s: %w", basePath, err)
+	}
+
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+		chartDir := filepath.Join(basePath, entry.Name())
+		// Only run dep update if the directory contains a Chart.yaml
+		if _, err := os.Stat(filepath.Join(chartDir, "Chart.yaml")); os.IsNotExist(err) {
+			continue
+		}
+		if err := RunDepUpdate(chartDir); err != nil {
+			fmt.Printf("Warning: dep update failed for %s: %v\n", chartDir, err)
+			// Continue with other charts even if one fails
+		}
 	}
 
 	return nil
